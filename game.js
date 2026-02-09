@@ -25,15 +25,16 @@ const COLORS = {
 
 // Game constants
 const TILE_SIZE = 8;
-const SCALE = 2;
+const SCALE = 3; // Повышенное разрешение
 const SCALED_TILE = TILE_SIZE * SCALE;
 const LEVEL_WIDTH = 32;
 const LEVEL_HEIGHT = 24;
 
-// Timing - замедляем игру
-const MOVE_DELAY = 150; // ms между движениями
-const FALL_DELAY = 80; // ms при падении
-const GUARD_MOVE_DELAY = 200; // ms между движениями охранника
+// Timing - ещё медленнее на 10%
+const MOVE_DELAY = 165; // ms между движениями (было 150, +10%)
+const FALL_DELAY = 88; // ms при падении (было 80, +10%)
+const GUARD_MOVE_DELAY = 220; // ms между движениями охранника (было 200, +10%)
+const ANIMATION_SPEED = 8; // скорость анимации
 
 // Tile types
 const EMPTY = 0;
@@ -50,6 +51,7 @@ let level = [];
 let player = {
     x: 0, y: 0,
     targetX: 0, targetY: 0,
+    smoothX: 0, smoothY: 0, // для плавного движения
     moving: false,
     facing: 1, // 1 = right, -1 = left
     onLadder: false,
@@ -73,31 +75,31 @@ let lastTime = 0;
 // Input
 const keys = {};
 
-// Level 1 - simplified for testing
+// Level 1 - более интересный и играбельный
 const LEVEL1 = [
     "################################",
     "#                              #",
-    "#                              #",
-    "#                              #",
-    "#   HHHHHHHHHHHHHHHHHHHHHH     #",
-    "#   H                  H       #",
-    "#   H    $     $      H        #",
-    "#   H  HHHHHHHHHHHH   H        #",
-    "#   H  H            H H        #",
-    "#   H  H    $$$$    H H        #",
-    "#   H  H  ########  H H        #",
-    "#   H  H  #      #  H H        #",
-    "#   H  H  # $$$$ #  H H        #",
-    "#   H  H  # #### #  H H        #",
-    "#   H  H  #      #  H H        #",
-    "#   H  H  ########  H H        #",
-    "#   H  HHHHHHHHHHHHHH H        #",
-    "#   H                  H       #",
-    "#   HHHHHHHHHHHHHHHHHHHH       #",
-    "#                              #",
-    "#                              #",
-    "#                              #",
-    "#    P                     G   #",
+    "#       L                      #",
+    "#       L                      #",
+    "#   $   L   $   $   $   L      #",
+    "#######L########################",
+    "#      L            L          #",
+    "#      L   -----$--L----       #",
+    "#      L    $    $ L           #",
+    "#  $   L        $  L   $       #",
+    "########L###########L###########",
+    "#        L   $   $  L          #",
+    "#  ----$-L-----------L----     #",
+    "#        L           L         #",
+    "#   $    L    $  $   L    $    #",
+    "#########L###########L##########",
+    "#        L           L         #",
+    "#   $    L   ----$--L-----  $  #",
+    "#        L    $     L          #",
+    "#########L###########L##########",
+    "#  P     L           L      G  #",
+    "#        L    $  $   L          #",
+    "########HHHHHHHHHHHHHHHH########",
     "################################"
 ];
 
@@ -135,8 +137,8 @@ function parseLevel(levelData) {
                     break;
                 case 'P':
                     level[y][x] = EMPTY;
-                    player.x = player.targetX = x;
-                    player.y = player.targetY = y;
+                    player.x = player.targetX = player.smoothX = x;
+                    player.y = player.targetY = player.smoothY = y;
                     break;
                 case 'G':
                     level[y][x] = EMPTY;
@@ -234,43 +236,64 @@ function drawTile(x, y, type) {
             break;
 
         case GOLD:
+            // Более заметное золото с блеском
             ctx.fillStyle = COLORS.GOLD;
-            ctx.fillRect(px + 2, py + 2, SCALED_TILE - 4, SCALED_TILE - 4);
+            ctx.fillRect(px + 1, py + 1, SCALED_TILE - 2, SCALED_TILE - 2);
             ctx.fillStyle = COLORS.YELLOW;
-            ctx.fillRect(px + 3, py + 3, SCALED_TILE - 6, SCALED_TILE - 6);
+            ctx.fillRect(px + 2, py + 2, SCALED_TILE - 4, SCALED_TILE - 4);
+            // Блеск
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(px + 3, py + 3, 2, 2);
             break;
     }
 }
 
 function drawPlayer() {
-    const px = player.x * SCALED_TILE;
-    const py = player.y * SCALED_TILE;
+    // Плавная интерполяция позиции
+    const lerp = 0.3;
+    player.smoothX += (player.x - player.smoothX) * lerp;
+    player.smoothY += (player.y - player.smoothY) * lerp;
+    
+    const px = player.smoothX * SCALED_TILE;
+    const py = player.smoothY * SCALED_TILE;
 
     ctx.fillStyle = COLORS.PLAYER;
 
+    // Более детализированный персонаж
     // Body
     ctx.fillRect(px + 3, py + 4, SCALED_TILE - 6, SCALED_TILE - 5);
 
     // Head
     ctx.fillRect(px + 3, py + 1, SCALED_TILE - 6, 4);
+    
+    // Eyes
+    ctx.fillStyle = COLORS.BLACK;
+    if (player.facing > 0) {
+        ctx.fillRect(px + SCALED_TILE - 5, py + 2, 2, 2);
+    } else {
+        ctx.fillRect(px + 3, py + 2, 2, 2);
+    }
 
     // Legs animation
+    ctx.fillStyle = COLORS.PLAYER;
     if (player.moving && !player.falling && !player.onLadder) {
-        const legOffset = Math.floor(player.animFrame / 2) % 2;
+        const legOffset = Math.floor(player.animFrame / ANIMATION_SPEED) % 2;
         ctx.fillRect(px + 3, py + SCALED_TILE - 2, 3, 2);
         ctx.fillRect(px + SCALED_TILE - 6 + legOffset, py + SCALED_TILE - 2, 3, 2);
     } else if (player.falling) {
-        // Falling pose
+        // Falling pose - руки вверх
         ctx.fillRect(px + 2, py + SCALED_TILE - 2, 3, 2);
         ctx.fillRect(px + SCALED_TILE - 5, py + SCALED_TILE - 2, 3, 2);
+        ctx.fillRect(px + 1, py + 2, 2, 3);
+        ctx.fillRect(px + SCALED_TILE - 3, py + 2, 2, 3);
     } else {
         ctx.fillRect(px + 3, py + SCALED_TILE - 2, 3, 2);
         ctx.fillRect(px + SCALED_TILE - 6, py + SCALED_TILE - 2, 3, 2);
     }
 
     // Arms animation
-    if (player.moving && !player.onLadder) {
-        const armOffset = Math.floor(player.animFrame / 2) % 2;
+    if (player.moving && !player.onLadder && !player.falling) {
+        const armOffset = Math.floor(player.animFrame / ANIMATION_SPEED) % 2;
         ctx.fillRect(px + (player.facing > 0 ? SCALED_TILE - 2 : 0), py + 4 + armOffset, 2, 3);
     } else if (player.onLadder) {
         ctx.fillRect(px + 1, py + 5, 2, 3);
@@ -284,22 +307,35 @@ function drawGuard(guard) {
     const px = guard.x * SCALED_TILE;
     const py = guard.y * SCALED_TILE;
 
-    // Body (gold if carrying)
+    // Детализированный скелет-охранник
     ctx.fillStyle = guard.hasGold ? COLORS.GOLD : COLORS.GUARD;
-    ctx.fillRect(px + 3, py + 4, SCALED_TILE - 6, SCALED_TILE - 5);
-
-    // Head
-    ctx.fillStyle = COLORS.GUARD;
-    ctx.fillRect(px + 3, py + 1, SCALED_TILE - 6, 4);
-
-    // Legs
+    
+    // Skull head
+    ctx.fillRect(px + 2, py + 1, SCALED_TILE - 4, 4);
+    ctx.fillStyle = COLORS.BLACK;
+    // Eye sockets
+    ctx.fillRect(px + 3, py + 2, 2, 2);
+    ctx.fillRect(px + SCALED_TILE - 5, py + 2, 2, 2);
+    // Nose hole
+    ctx.fillRect(px + SCALED_TILE/2 - 1, py + 3, 2, 1);
+    
+    // Ribs
+    ctx.fillStyle = guard.hasGold ? COLORS.GOLD : COLORS.GUARD;
+    for (let i = 0; i < 3; i++) {
+        ctx.fillRect(px + 4, py + 5 + i * 2, SCALED_TILE - 8, 1);
+    }
+    
+    // Spine
+    ctx.fillRect(px + SCALED_TILE/2 - 1, py + 5, 2, SCALED_TILE - 8);
+    
+    // Legs animation
     if (guard.moving) {
-        const legOffset = Math.floor(guard.animFrame / 2) % 2;
-        ctx.fillRect(px + 3, py + SCALED_TILE - 2, 3, 2);
-        ctx.fillRect(px + SCALED_TILE - 6 + legOffset, py + SCALED_TILE - 2, 3, 2);
+        const legOffset = Math.floor(guard.animFrame / ANIMATION_SPEED) % 2;
+        ctx.fillRect(px + 3, py + SCALED_TILE - 2, 2, 2);
+        ctx.fillRect(px + SCALED_TILE - 5 + legOffset, py + SCALED_TILE - 2, 2, 2);
     } else {
-        ctx.fillRect(px + 3, py + SCALED_TILE - 2, 3, 2);
-        ctx.fillRect(px + SCALED_TILE - 6, py + SCALED_TILE - 2, 3, 2);
+        ctx.fillRect(px + 3, py + SCALED_TILE - 2, 2, 2);
+        ctx.fillRect(px + SCALED_TILE - 5, py + SCALED_TILE - 2, 2, 2);
     }
 
     // In hole - shake animation
