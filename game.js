@@ -33,8 +33,9 @@ const LEVEL_HEIGHT = 24;
 // Timing - ещё медленнее на 10%
 const MOVE_DELAY = 182; // ms между движениями (было 165, +10%)
 const FALL_DELAY = 97; // ms при падении (было 88, +10%)
-const GUARD_MOVE_DELAY = 242; // ms между движениями охранника (было 220, +10%)
+const GUARD_MOVE_DELAY = 290; // ms между движениями охранника (было 242, +20%)
 const ANIMATION_SPEED = 10; // скорость анимации (медленнее = плавнее)
+const HOLE_CLOSE_TIME = 2500; // время закрытия ямы (было 5000, теперь в 2 раза быстрее)
 
 // Tile types
 const EMPTY = 0;
@@ -381,6 +382,11 @@ function isSolid(x, y) {
 
 function isOnGround(x, y) {
     if (y >= LEVEL_HEIGHT - 1) return true;
+    
+    // Check if guard in hole below - can walk on guard's head
+    const guardInHole = guards.find(g => !g.dead && g.inHole && g.x === x && g.y === y + 1);
+    if (guardInHole) return true;
+    
     const below = level[y + 1][x];
     return below === BRICK || below === SOLID || below === LADDER;
 }
@@ -424,7 +430,7 @@ function updateHoles(dt) {
                 }
             }
         } else {
-            if (hole.timer >= 5000) { // 5 секунд до закрытия
+            if (hole.timer >= HOLE_CLOSE_TIME) { // 2.5 секунды до закрытия (в 2 раза быстрее)
                 hole.stage--;
                 hole.timer = 0;
                 if (hole.stage <= 0) {
@@ -467,6 +473,15 @@ function updatePlayer(dt) {
             if (canMove(player.x, player.y + 1)) {
                 player.y++;
                 player.lastMoveTime = now;
+                
+                // Collect gold while falling
+                if (level[player.y][player.x] === GOLD) {
+                    level[player.y][player.x] = EMPTY;
+                    goldCollected++;
+                    if (goldCollected >= goldCount) {
+                        hiddenLaddersRevealed = true;
+                    }
+                }
             } else {
                 player.falling = false;
             }
@@ -589,25 +604,46 @@ function updateGuards(dt) {
                 moved = true;
             }
         }
-        // Same level chase
-        else if (Math.abs(dy) < 3) {
+        // Smart pathfinding - chase player including ladders
+        else {
+            // Try to find best direction towards player
+            let bestMove = null;
+            let bestDist = Infinity;
+            
+            // Check horizontal movement
             if (dx > 0 && canMove(guard.x + 1, guard.y)) {
-                guard.x++;
-                guard.facing = 1;
-                moved = true;
+                bestMove = { x: guard.x + 1, y: guard.y, facing: 1 };
+                bestDist = Math.abs(player.x - (guard.x + 1)) + Math.abs(player.y - guard.y);
             } else if (dx < 0 && canMove(guard.x - 1, guard.y)) {
-                guard.x--;
-                guard.facing = -1;
-                moved = true;
+                bestMove = { x: guard.x - 1, y: guard.y, facing: -1 };
+                bestDist = Math.abs(player.x - (guard.x - 1)) + Math.abs(player.y - guard.y);
             }
-        }
-        // Use ladders
-        else if (guardOnLadder) {
-            if (dy > 0 && canMove(guard.x, guard.y + 1)) {
-                guard.y++;
-                moved = true;
-            } else if (dy < 0 && canMove(guard.x, guard.y - 1)) {
-                guard.y--;
+            
+            // Check if ladder helps get closer
+            if (guardOnLadder || isOnLadder(guard.x, guard.y)) {
+                // Try going up
+                if (dy < 0 && canMove(guard.x, guard.y - 1)) {
+                    const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y - 1));
+                    if (dist < bestDist) {
+                        bestMove = { x: guard.x, y: guard.y - 1, facing: guard.facing };
+                        bestDist = dist;
+                    }
+                }
+                // Try going down
+                if (dy > 0 && canMove(guard.x, guard.y + 1)) {
+                    const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y + 1));
+                    if (dist < bestDist) {
+                        bestMove = { x: guard.x, y: guard.y + 1, facing: guard.facing };
+                        bestDist = dist;
+                    }
+                }
+            }
+            
+            // Execute best move
+            if (bestMove) {
+                guard.x = bestMove.x;
+                guard.y = bestMove.y;
+                guard.facing = bestMove.facing;
                 moved = true;
             }
         }
