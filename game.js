@@ -31,10 +31,10 @@ const LEVEL_WIDTH = 32;
 const LEVEL_HEIGHT = 24;
 
 // Timing - ещё медленнее на 10%
-const MOVE_DELAY = 165; // ms между движениями (было 150, +10%)
-const FALL_DELAY = 88; // ms при падении (было 80, +10%)
-const GUARD_MOVE_DELAY = 220; // ms между движениями охранника (было 200, +10%)
-const ANIMATION_SPEED = 8; // скорость анимации
+const MOVE_DELAY = 182; // ms между движениями (было 165, +10%)
+const FALL_DELAY = 97; // ms при падении (было 88, +10%)
+const GUARD_MOVE_DELAY = 242; // ms между движениями охранника (было 220, +10%)
+const ANIMATION_SPEED = 10; // скорость анимации (медленнее = плавнее)
 
 // Tile types
 const EMPTY = 0;
@@ -75,13 +75,13 @@ let lastTime = 0;
 // Input
 const keys = {};
 
-// Level 1 - более интересный и играбельный
+// Level 1 - более интересный и играбельный с доступом к платформам
 const LEVEL1 = [
     "################################",
     "#                              #",
-    "#       L                      #",
-    "#       L                      #",
-    "#   $   L   $   $   $   L      #",
+    "#       L                 L    #",
+    "#       L                 L    #",
+    "#   $   L   $   $   $   L L    #",
     "#######L########################",
     "#      L            L          #",
     "#      L   -----$--L----       #",
@@ -90,15 +90,15 @@ const LEVEL1 = [
     "########L###########L###########",
     "#        L   $   $  L          #",
     "#  ----$-L-----------L----     #",
-    "#        L           L         #",
-    "#   $    L    $  $   L    $    #",
-    "#########L###########L##########",
-    "#        L           L         #",
-    "#   $    L   ----$--L-----  $  #",
-    "#        L    $     L          #",
-    "#########L###########L##########",
-    "#  P     L           L      G  #",
-    "#        L    $  $   L          #",
+    "#        L  HHHHHHH  L         #",
+    "#   $    H  H     H  H    $    #",
+    "#########H  H     H  H##########",
+    "#        H  H     H  H         #",
+    "#   $    H  H ---H---H-----  $ #",
+    "#        H  H  $ H $ H         #",
+    "#########H  HHHHHHHHHH##########",
+    "#  P     H         H  H     G  #",
+    "#        H   $  $  H  H         #",
     "########HHHHHHHHHHHHHHHH########",
     "################################"
 ];
@@ -236,14 +236,15 @@ function drawTile(x, y, type) {
             break;
 
         case GOLD:
-            // Более заметное золото с блеском
-            ctx.fillStyle = COLORS.GOLD;
+            // Яркое манящее золото
+            ctx.fillStyle = '#FFD700';
             ctx.fillRect(px + 1, py + 1, SCALED_TILE - 2, SCALED_TILE - 2);
-            ctx.fillStyle = COLORS.YELLOW;
-            ctx.fillRect(px + 2, py + 2, SCALED_TILE - 4, SCALED_TILE - 4);
             // Блеск
+            ctx.fillStyle = '#FFEC8B';
+            ctx.fillRect(px + 2, py + 2, SCALED_TILE - 4, SCALED_TILE - 4);
+            // Яркий блик
             ctx.fillStyle = '#FFFFFF';
-            ctx.fillRect(px + 3, py + 3, 2, 2);
+            ctx.fillRect(px + 3, py + 3, 3, 3);
             break;
     }
 }
