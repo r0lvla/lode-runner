@@ -76,29 +76,29 @@ let lastTime = 0;
 // Input
 const keys = {};
 
-// Level 1 - продуманный уровень с логикой сбора золота и выхода
+// Level 1 - продуманный уровень с лестницами от пола до верха
 const LEVEL1 = [
     "################################",
     "#                              #",
-    "#  L                        L  #",  // Выход наверху (скрытые лестницы)
+    "#  L                        L  #",  // Скрытые лестницы для выхода
     "#  L                        L  #",
-    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",  // Лестница доходит до верха
     "#        H              H      #",
     "#   $    H    $$$ $$$   H   $  #",
-    "#########H              H#######",
+    "#        H              H      #",
     "#        H   --------   H      #",
     "#   $    H              H   $  #",
-    "#########HHHHHHHHHHHHHHHH#######",  // Сплошная лестница для врагов
+    "#        H              H      #",  // Убрал кирпичи - лестница сплошная
+    "#        H   --------   H      #",
+    "#   $    H              H   $  #",
     "#        H              H      #",
-    "#   $    H   --------   H   $  #",
-    "#########H              H#######",
     "#        H    $$$ $$$   H      #",
     "#   $    H              H   $  #",
-    "#########HHHHHHHHHHHHHHHH#######",  // Ещё одна лестница
+    "#        H              H      #",  // Убрал кирпичи - лестница сплошная
+    "#        H   --------   H      #",
+    "#   $    H              H   $  #",
     "#        H              H      #",
-    "#   $    H    $    $    H   $  #",
-    "#########H              H#######",
-    "#   P    HHHHHHHHHHHHHHHH    G #",
+    "#   P    HHHHHHHHHHHHHHHH    G #",  // Лестница от пола
     "#                              #",
     "################################",
     "################################"
@@ -610,20 +610,25 @@ function updateGuards(dt) {
             let bestMove = null;
             let bestDist = Infinity;
             
-            // Check if can climb ladder (from floor or from ladder)
-            const canClimb = isOnLadder(guard.x, guard.y) || 
-                            (isOnGround(guard.x, guard.y) && isOnLadder(guard.x, guard.y - 1));
+            // Check if can climb: already on ladder OR can enter ladder from floor
+            const canClimbUp = isOnLadder(guard.x, guard.y) || 
+                              (guardOnGround && isOnLadder(guard.x, guard.y - 1));
+            const canClimbDown = isOnLadder(guard.x, guard.y);
             
-            // Try going up on ladder
-            if (canClimb && canMove(guard.x, guard.y - 1)) {
-                const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y - 1));
-                if (dist < bestDist) {
-                    bestMove = { x: guard.x, y: guard.y - 1, facing: guard.facing };
-                    bestDist = dist;
+            // Priority 1: Go up if player is above and can climb
+            if (dy < 0 && canClimbUp && guard.y > 0) {
+                const targetTile = level[guard.y - 1][guard.x];
+                if (targetTile === EMPTY || targetTile === LADDER || targetTile === BAR || targetTile === GOLD ||
+                    (targetTile === HIDDEN_LADDER && hiddenLaddersRevealed)) {
+                    const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y - 1));
+                    if (dist < bestDist) {
+                        bestMove = { x: guard.x, y: guard.y - 1, facing: guard.facing };
+                        bestDist = dist;
+                    }
                 }
             }
             
-            // Check horizontal movement
+            // Priority 2: Horizontal movement towards player
             if (dx > 0 && canMove(guard.x + 1, guard.y)) {
                 const dist = Math.abs(player.x - (guard.x + 1)) + Math.abs(player.y - guard.y);
                 if (dist < bestDist) {
@@ -639,12 +644,14 @@ function updateGuards(dt) {
                 }
             }
             
-            // Try going down on ladder
-            if (isOnLadder(guard.x, guard.y) && canMove(guard.x, guard.y + 1)) {
-                const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y + 1));
-                if (dist < bestDist) {
-                    bestMove = { x: guard.x, y: guard.y + 1, facing: guard.facing };
-                    bestDist = dist;
+            // Priority 3: Go down if player is below and on ladder
+            if (dy > 0 && canClimbDown && guard.y < LEVEL_HEIGHT - 1) {
+                if (canMove(guard.x, guard.y + 1)) {
+                    const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y + 1));
+                    if (dist < bestDist) {
+                        bestMove = { x: guard.x, y: guard.y + 1, facing: guard.facing };
+                        bestDist = dist;
+                    }
                 }
             }
             
