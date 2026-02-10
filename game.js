@@ -76,13 +76,13 @@ let lastTime = 0;
 // Input
 const keys = {};
 
-// Level 1 - продуманный уровень с лестницами от пола до верха
+// Level 1 - классический Lode Runner с выходом через скрытые лестницы
 const LEVEL1 = [
     "################################",
     "#                              #",
-    "#                              #",  // Убрал скрытые лестницы - они блокировали проход
-    "#                              #",
-    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",  // Лестница доходит до верха
+    "#  L                        L  #",  // Скрытые лестницы - появятся после сбора золота
+    "#  L                        L  #",
+    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",  // Обычная лестница
     "#        H              H      #",
     "#   $    H    $$$ $$$   H   $  #",
     "#        H              H      #",
@@ -103,6 +103,120 @@ const LEVEL1 = [
     "################################",
     "################################"
 ];
+
+// Level 2 - больше врагов, сложнее
+const LEVEL2 = [
+    "################################",
+    "#                              #",
+    "#     L                    L   #",
+    "#     L                    L   #",
+    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#     H                  H     #",
+    "#  $  H   $$$$$$$$$$     H  $  #",
+    "#     H                  H     #",
+    "#     H  ----------      H     #",
+    "#  ###H              H###H     #",
+    "#     H   $$$$   $$   H        #",
+    "#     H                  H     #",
+    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#        H          H          #",
+    "#  $     H   ----   H     $    #",
+    "#        H          H          #",
+    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#     H                  H     #",
+    "#  $  H    $$    $$     H  $   #",
+    "#     H                  H     #",
+    "#  P  HHHHHHHHHHHHHHHHHHHHH G G#",
+    "#     H                  H     #",
+    "################################",
+    "################################"
+];
+
+// Level 3 - лабиринт
+const LEVEL3 = [
+    "################################",
+    "#                              #",
+    "#L                            L#",
+    "#L                            L#",
+    "#HHHHHHHHHHH    HHHHHHHHHHHHHH #",
+    "#         H    H               #",
+    "# $$$$$   H    H   $$$$$$$$$   #",
+    "#         H    H               #",
+    "##########H    H###########    #",
+    "#         H    H        $$     #",
+    "# $$$$$   H    H   $$$$        #",
+    "#         H    H               #",
+    "#HHHHHHHHHH    HHHHHHHHHHHHHHH #",
+    "#              H               #",
+    "# $$$$$$       H    $$$$$$$$$  #",
+    "#              H               #",
+    "#HHHHHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#         H          H         #",
+    "# $$$$$   H   ----   H   $$$   #",
+    "#         H          H         #",
+    "# P   HHHHHHHHHHHHHHHHHHH  G   #",
+    "#         H          H         #",
+    "################################",
+    "################################"
+];
+
+// Level 4 - много перекладин
+const LEVEL4 = [
+    "################################",
+    "#                              #",
+    "#   L                      L   #",
+    "#   L                      L   #",
+    "#   HHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#         H          H         #",
+    "#   $$    H----------H   $$    #",
+    "#         H          H         #",
+    "#   HHHHHHHHHHHHHHHHHHHHHHHH   #",
+    "#         H          H         #",
+    "#   $$$   H----------H  $$$    #",
+    "#         H          H         #",
+    "#   HHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#         H          H         #",
+    "#   $$    H----------H   $$    #",
+    "#         H          H         #",
+    "#   HHHHHHHHHHHHHHHHHHHHHHHH   #",
+    "#         H          H         #",
+    "#   $$$$$ H----------H $$$$$   #",
+    "#         H          H         #",
+    "# P   HHHHHHHHHHHHHHHHHHH G    #",
+    "#         H          H         #",
+    "################################",
+    "################################"
+];
+
+// Level 5 - финальный, много врагов
+const LEVEL5 = [
+    "################################",
+    "#                              #",
+    "#L                            L#",
+    "#L                            L#",
+    "#HHHHHHHHHHHHHHHHHHHHHHHHHHHHHH#",
+    "#H       H          H        H #",
+    "#H  $$$  H----------H  $$$   H #",
+    "#H       H          H        H #",
+    "#HHHHHHHHH          HHHHHHHHHH #",
+    "#H       H          H        H #",
+    "#H  $$$$ H----------H $$$$$  H #",
+    "#H       H          H        H #",
+    "#HHHHHHHHHHHHHHHHHHHHHHHHHHHHHH#",
+    "#H       H          H        H #",
+    "#H  $$$  H----------H  $$$   H #",
+    "#H       H          H        H #",
+    "#HHHHHHHHH          HHHHHHHHHH #",
+    "#H       H          H        H #",
+    "#H  $$$$ H----------H $$$$$  H #",
+    "#H       H          H        H #",
+    "#HP  HHHHHHHHHHHHHHHHHHHHH  GGG#",
+    "#H       H          H        H #",
+    "################################",
+    "################################"
+];
+
+const LEVELS = [LEVEL1, LEVEL2, LEVEL3, LEVEL4, LEVEL5];
 
 function parseLevel(levelData) {
     level = [];
@@ -171,7 +285,7 @@ function parseLevel(levelData) {
 }
 
 function init() {
-    parseLevel(LEVEL1);
+    parseLevel(LEVELS[currentLevel - 1]);
     lastTime = performance.now();
     requestAnimationFrame(gameLoop);
 }
@@ -611,10 +725,11 @@ function updateGuards(dt) {
             let bestMove = null;
             let bestDist = Infinity;
             
-            // Check if can climb: already on ladder OR can enter ladder from floor
-            const canClimbUp = isOnLadder(guard.x, guard.y) || 
-                              (guardOnGround && isOnLadder(guard.x, guard.y - 1));
-            const canClimbDown = isOnLadder(guard.x, guard.y);
+            // Check if can climb: already on ladder OR ladder adjacent (up or down)
+            const ladderAbove = guard.y > 0 && isOnLadder(guard.x, guard.y - 1);
+            const ladderBelow = guard.y < LEVEL_HEIGHT - 1 && isOnLadder(guard.x, guard.y + 1);
+            const canClimbUp = isOnLadder(guard.x, guard.y) || ladderAbove;
+            const canClimbDown = isOnLadder(guard.x, guard.y) || ladderBelow;
             
             // Priority 1: Go up if player is above and can climb
             if (dy < 0 && canClimbUp && guard.y > 0) {
@@ -645,7 +760,7 @@ function updateGuards(dt) {
                 }
             }
             
-            // Priority 3: Go down if player is below and on ladder
+            // Priority 3: Go down if player is below and can climb down
             if (dy > 0 && canClimbDown && guard.y < LEVEL_HEIGHT - 1) {
                 if (canMove(guard.x, guard.y + 1)) {
                     const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y + 1));
@@ -696,14 +811,20 @@ function playerDie() {
     if (lives <= 0) {
         gameOver = true;
     } else {
-        parseLevel(LEVEL1);
+        parseLevel(LEVELS[currentLevel - 1]);
     }
 }
 
 function nextLevel() {
     currentLevel++;
-    lives++;
-    parseLevel(LEVEL1);
+    if (currentLevel > LEVELS.length) {
+        // Победа! Прошли все уровни
+        currentLevel = 1;
+        lives = 3;
+    } else {
+        lives++;
+    }
+    parseLevel(LEVELS[currentLevel - 1]);
 }
 
 function update(dt) {
