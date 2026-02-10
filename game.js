@@ -484,8 +484,9 @@ function draw() {
 function canMove(x, y) {
     if (x < 0 || x >= LEVEL_WIDTH || y < 0 || y >= LEVEL_HEIGHT) return false;
     const tile = level[y][x];
+    // HIDDEN_LADDER всегда проходима, но отображается только после сбора золота
     return tile === EMPTY || tile === LADDER || tile === BAR || tile === GOLD ||
-           tile === TRAP || (tile === HIDDEN_LADDER && hiddenLaddersRevealed);
+           tile === TRAP || tile === HIDDEN_LADDER;
 }
 
 function isSolid(x, y) {
@@ -665,8 +666,9 @@ function updatePlayer(dt) {
         }
     }
 
-    // Check escape - reach top after collecting all gold
-    if (goldCollected >= goldCount && player.y <= 2) {
+    // Check escape - только через скрытые лестницы после сбора всего золота
+    const playerTile = level[player.y][player.x];
+    if (playerTile === HIDDEN_LADDER && hiddenLaddersRevealed) {
         levelComplete = true;
     }
 }
