@@ -80,21 +80,21 @@ const keys = {};
 const LEVEL1 = [
     "################################",
     "#                              #",
-    "#  L                        L  #",  // Скрытые лестницы для выхода
-    "#  L                        L  #",
+    "#                              #",  // Убрал скрытые лестницы - они блокировали проход
+    "#                              #",
     "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",  // Лестница доходит до верха
     "#        H              H      #",
     "#   $    H    $$$ $$$   H   $  #",
     "#        H              H      #",
     "#        H   --------   H      #",
     "#   $    H              H   $  #",
-    "#        H              H      #",  // Убрал кирпичи - лестница сплошная
+    "#        H              H      #",
     "#        H   --------   H      #",
     "#   $    H              H   $  #",
     "#        H              H      #",
     "#        H    $$$ $$$   H      #",
     "#   $    H              H   $  #",
-    "#        H              H      #",  // Убрал кирпичи - лестница сплошная
+    "#        H              H      #",
     "#        H   --------   H      #",
     "#   $    H              H   $  #",
     "#        H              H      #",
@@ -511,8 +511,9 @@ function updatePlayer(dt) {
         }
     }
 
-    // Vertical (ladders)
-    if (player.onLadder) {
+    // Vertical (ladders) - can start climbing down if ladder below
+    const ladderBelow = player.y < LEVEL_HEIGHT - 1 && isOnLadder(player.x, player.y + 1);
+    if (player.onLadder || ladderBelow) {
         if (keys['ArrowUp'] || keys['KeyW']) {
             if (canMove(player.x, player.y - 1)) {
                 player.y--;
@@ -550,8 +551,8 @@ function updatePlayer(dt) {
         }
     }
 
-    // Check escape
-    if (hiddenLaddersRevealed && player.y <= 1) {
+    // Check escape - reach top after collecting all gold
+    if (goldCollected >= goldCount && player.y <= 2) {
         levelComplete = true;
     }
 }
