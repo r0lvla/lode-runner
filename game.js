@@ -88,13 +88,13 @@ const LEVEL1 = [
     "#########H              H#######",
     "#        H   --------   H      #",
     "#   $    H              H   $  #",
-    "#########H    $    $    H#######",
+    "#########HHHHHHHHHHHHHHHH#######",  // Сплошная лестница для врагов
     "#        H              H      #",
     "#   $    H   --------   H   $  #",
     "#########H              H#######",
     "#        H    $$$ $$$   H      #",
     "#   $    H              H   $  #",
-    "#########H   --------   H#######",
+    "#########HHHHHHHHHHHHHHHH#######",  // Ещё одна лестница
     "#        H              H      #",
     "#   $    H    $    $    H   $  #",
     "#########H              H#######",
@@ -610,32 +610,41 @@ function updateGuards(dt) {
             let bestMove = null;
             let bestDist = Infinity;
             
-            // Check horizontal movement
-            if (dx > 0 && canMove(guard.x + 1, guard.y)) {
-                bestMove = { x: guard.x + 1, y: guard.y, facing: 1 };
-                bestDist = Math.abs(player.x - (guard.x + 1)) + Math.abs(player.y - guard.y);
-            } else if (dx < 0 && canMove(guard.x - 1, guard.y)) {
-                bestMove = { x: guard.x - 1, y: guard.y, facing: -1 };
-                bestDist = Math.abs(player.x - (guard.x - 1)) + Math.abs(player.y - guard.y);
+            // Check if can climb ladder (from floor or from ladder)
+            const canClimb = isOnLadder(guard.x, guard.y) || 
+                            (isOnGround(guard.x, guard.y) && isOnLadder(guard.x, guard.y - 1));
+            
+            // Try going up on ladder
+            if (canClimb && canMove(guard.x, guard.y - 1)) {
+                const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y - 1));
+                if (dist < bestDist) {
+                    bestMove = { x: guard.x, y: guard.y - 1, facing: guard.facing };
+                    bestDist = dist;
+                }
             }
             
-            // Check if ladder helps get closer
-            if (guardOnLadder || isOnLadder(guard.x, guard.y)) {
-                // Try going up
-                if (dy < 0 && canMove(guard.x, guard.y - 1)) {
-                    const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y - 1));
-                    if (dist < bestDist) {
-                        bestMove = { x: guard.x, y: guard.y - 1, facing: guard.facing };
-                        bestDist = dist;
-                    }
+            // Check horizontal movement
+            if (dx > 0 && canMove(guard.x + 1, guard.y)) {
+                const dist = Math.abs(player.x - (guard.x + 1)) + Math.abs(player.y - guard.y);
+                if (dist < bestDist) {
+                    bestMove = { x: guard.x + 1, y: guard.y, facing: 1 };
+                    bestDist = dist;
                 }
-                // Try going down
-                if (dy > 0 && canMove(guard.x, guard.y + 1)) {
-                    const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y + 1));
-                    if (dist < bestDist) {
-                        bestMove = { x: guard.x, y: guard.y + 1, facing: guard.facing };
-                        bestDist = dist;
-                    }
+            } 
+            if (dx < 0 && canMove(guard.x - 1, guard.y)) {
+                const dist = Math.abs(player.x - (guard.x - 1)) + Math.abs(player.y - guard.y);
+                if (dist < bestDist) {
+                    bestMove = { x: guard.x - 1, y: guard.y, facing: -1 };
+                    bestDist = dist;
+                }
+            }
+            
+            // Try going down on ladder
+            if (isOnLadder(guard.x, guard.y) && canMove(guard.x, guard.y + 1)) {
+                const dist = Math.abs(player.x - guard.x) + Math.abs(player.y - (guard.y + 1));
+                if (dist < bestDist) {
+                    bestMove = { x: guard.x, y: guard.y + 1, facing: guard.facing };
+                    bestDist = dist;
                 }
             }
             
