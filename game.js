@@ -1,5 +1,5 @@
 // Lode Runner - ZX Spectrum Clone
-// Крюк 🪝 для Романа
+// РљСЂСЋРє рџЄќ РґР»СЏ Р РѕРјР°РЅР° вЂ” Updated Levels 2026-02-17
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -25,17 +25,17 @@ const COLORS = {
 
 // Game constants
 const TILE_SIZE = 8;
-const SCALE = 3; // Повышенное разрешение
+const SCALE = 3; // РџРѕРІС‹С€РµРЅРЅРѕРµ СЂР°Р·СЂРµС€РµРЅРёРµ
 const SCALED_TILE = TILE_SIZE * SCALE;
 const LEVEL_WIDTH = 32;
 const LEVEL_HEIGHT = 24;
 
-// Timing - ещё медленнее на 10%
-const MOVE_DELAY = 182; // ms между движениями (было 165, +10%)
-const FALL_DELAY = 97; // ms при падении (было 88, +10%)
-const GUARD_MOVE_DELAY = 290; // ms между движениями охранника (было 242, +20%)
-const ANIMATION_SPEED = 10; // скорость анимации (медленнее = плавнее)
-const HOLE_CLOSE_TIME = 2500; // время закрытия ямы (было 5000, теперь в 2 раза быстрее)
+// Timing - РµС‰С‘ РјРµРґР»РµРЅРЅРµРµ РЅР° 10%
+const MOVE_DELAY = 182; // ms РјРµР¶РґСѓ РґРІРёР¶РµРЅРёСЏРјРё (Р±С‹Р»Рѕ 165, +10%)
+const FALL_DELAY = 97; // ms РїСЂРё РїР°РґРµРЅРёРё (Р±С‹Р»Рѕ 88, +10%)
+const GUARD_MOVE_DELAY = 290; // ms РјРµР¶РґСѓ РґРІРёР¶РµРЅРёСЏРјРё РѕС…СЂР°РЅРЅРёРєР° (Р±С‹Р»Рѕ 242, +20%)
+const ANIMATION_SPEED = 10; // СЃРєРѕСЂРѕСЃС‚СЊ Р°РЅРёРјР°С†РёРё (РјРµРґР»РµРЅРЅРµРµ = РїР»Р°РІРЅРµРµ)
+const HOLE_CLOSE_TIME = 2500; // РІСЂРµРјСЏ Р·Р°РєСЂС‹С‚РёСЏ СЏРјС‹ (Р±С‹Р»Рѕ 5000, С‚РµРїРµСЂСЊ РІ 2 СЂР°Р·Р° Р±С‹СЃС‚СЂРµРµ)
 
 // Tile types
 const EMPTY = 0;
@@ -52,7 +52,7 @@ let level = [];
 let player = {
     x: 0, y: 0,
     targetX: 0, targetY: 0,
-    smoothX: 0, smoothY: 0, // для плавного движения
+    smoothX: 0, smoothY: 0, // РґР»СЏ РїР»Р°РІРЅРѕРіРѕ РґРІРёР¶РµРЅРёСЏ
     moving: false,
     facing: 1, // 1 = right, -1 = left
     onLadder: false,
@@ -76,91 +76,91 @@ let lastTime = 0;
 // Input
 const keys = {};
 
-// Level 1 - классический Lode Runner с выходом через скрытые лестницы
+// Level 1 вЂ” РљР»Р°СЃСЃРёС‡РµСЃРєРёР№ (РРЎРџР РђР’Р›Р•РќРћ)
 const LEVEL1 = [
     "################################",
     "#                              #",
-    "#  L                        L  #",  // Скрытые лестницы - появятся после сбора золота
     "#  L                        L  #",
-    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",  // Обычная лестница
+    "#  L                        L  #",
+    "#  #####################H####  #",
+    "#        H-------       H      #",
+    "#   $    H    $$$   $ $ H   $  #",
     "#        H              H      #",
-    "#   $    H    $$$ $$$   H   $  #",
+    "#        H--------------H      #",
+    "#   $    H                  $  #",
+    "#        H                     #",
+    "#        H--------------H      #",
+    "#   $    H              H   $  #",
     "#        H              H      #",
-    "#        H   --------   H      #",
+    "#   -----H    $$$ $$$   H----  #",
     "#   $    H              H   $  #",
     "#        H              H      #",
     "#        H   --------   H      #",
-    "#   $    H              H   $  #",
+    "#   $    H       $      H   $  #",
     "#        H              H      #",
-    "#        H    $$$ $$$   H      #",
-    "#   $    H              H   $  #",
-    "#        H              H      #",
-    "#        H   --------   H      #",
-    "#   $    H              H   $  #",
-    "#        H              H      #",
-    "#   P    HHHHHHHHHHHHHHHH    G #",
+    "#   P    H##############H    G #",
     "#        H              H      #",
     "################################",
     "################################"
 ];
 
-// Level 2 - больше врагов, сложнее
+// Level 2 вЂ” Р‘РѕР»СЊС€Рµ РІСЂР°РіРѕРІ (РРЎРџР РђР’Р›Р•РќРћ)
 const LEVEL2 = [
     "################################",
     "#                              #",
     "#     L                    L   #",
     "#     L                    L   #",
-    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#  ###H##################H###  #",
     "#     H                  H     #",
     "#  $  H   $$$$$$$$$$     H  $  #",
     "#     H                  H     #",
-    "#     H  ----------      H     #",
-    "#     H              H   H     #",
-    "#     H   $$$$   $$   H   H    #",
-    "#     H              H   H     #",
-    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",
-    "#        H          H          #",
-    "#  $     H   ----   H     $    #",
-    "#        H          H          #",
-    "#  HHHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "#     H  -------------   H     #",
     "#     H                  H     #",
-    "#  $  H    $$    $$     H  $   #",
+    "#     H   $$$$   $$      H     #",
     "#     H                  H     #",
-    "#  P  HHHHHHHHHHHHHHHHHHHHH G G#",
+    "#  ######H### $$ ###H########  #",
+    "#        H          H        --#",
+    "#  $     H----------H     $   $#",
+    "#        H    $$    H          #",
+    "#  ######################H###  #",
+    "#     H------------------H     #",
+    "#  $  H    $$    $$      H $   #",
+    "#     H                  H     #",
+    "#  P #H##################H# G G#",
     "#     H                  H     #",
     "################################",
     "################################"
 ];
 
-// Level 3 - лабиринт
+// Level 3 вЂ” Р›Р°Р±РёСЂРёРЅС‚ (РРЎРџР РђР’Р›Р•РќРћ)
 const LEVEL3 = [
     "################################",
-    "#                              #",
-    "#L                            L#",
-    "#L                            L#",
-    "#HHHHHHHHHHH    HHHHHHHHHHHHHH #",
+    "#           H--------          #",
+    "#L          H-------#######   L#",
+    "#L                 H##$$$##   L#",
+    "############   H################",
     "#    -----H    H---------------#",
     "# $$$$$   H----H   $$$$$$$$$   #",
     "#         H    H               #",
     "##########H    H###########    #",
-    "#         H    H        $$     #",
+    "#   ------H    H-----   $$     #",
     "# $$$$$   H    H   $$$$        #",
     "#         H    H               #",
-    "#HHHHHHHHHH    HHHHHHHHHHHHHHH #",
+    "###########    H############## #",
     "#              H               #",
     "# $$$$$$       H    $$$$$$$$$  #",
     "#              H               #",
-    "#HHHHHHHHHHHHHHHHHHHHHHHHHHHH  #",
+    "##########H##########H#######  #",
     "#         H          H         #",
     "# $$$$$   H   ----   H   $$$   #",
     "#         H          H         #",
-    "# P   HHHHHHHHHHHHHHHHHHH  G   #",
+    "# P   ####H##########H###  G   #",
     "#         H          H         #",
     "################################",
     "################################"
 ];
 
-// Level 4 - много перекладин
+// Level 4 вЂ” РњРЅРѕРіРѕ РїРµСЂРµРєР»Р°РґРёРЅ (Р±РµР· РёР·РјРµРЅРµРЅРёР№)
 const LEVEL4 = [
     "################################",
     "#                              #",
@@ -188,7 +188,7 @@ const LEVEL4 = [
     "################################"
 ];
 
-// Level 5 - финальный, много врагов
+// Level 5 вЂ” Р¤РёРЅР°Р»СЊРЅС‹Р№, 3 РѕС…СЂР°РЅРЅРёРєР° (Р±РµР· РёР·РјРµРЅРµРЅРёР№)
 const LEVEL5 = [
     "################################",
     "#                              #",
@@ -351,13 +351,13 @@ function drawTile(x, y, type) {
             break;
 
         case GOLD:
-            // Яркое манящее золото
+            // РЇСЂРєРѕРµ РјР°РЅСЏС‰РµРµ Р·РѕР»РѕС‚Рѕ
             ctx.fillStyle = '#FFD700';
             ctx.fillRect(px + 1, py + 1, SCALED_TILE - 2, SCALED_TILE - 2);
-            // Блеск
+            // Р‘Р»РµСЃРє
             ctx.fillStyle = '#FFEC8B';
             ctx.fillRect(px + 2, py + 2, SCALED_TILE - 4, SCALED_TILE - 4);
-            // Яркий блик
+            // РЇСЂРєРёР№ Р±Р»РёРє
             ctx.fillStyle = '#FFFFFF';
             ctx.fillRect(px + 3, py + 3, 3, 3);
             break;
@@ -365,7 +365,7 @@ function drawTile(x, y, type) {
 }
 
 function drawPlayer() {
-    // Плавная интерполяция позиции
+    // РџР»Р°РІРЅР°СЏ РёРЅС‚РµСЂРїРѕР»СЏС†РёСЏ РїРѕР·РёС†РёРё
     const lerp = 0.3;
     player.smoothX += (player.x - player.smoothX) * lerp;
     player.smoothY += (player.y - player.smoothY) * lerp;
@@ -375,7 +375,7 @@ function drawPlayer() {
 
     ctx.fillStyle = COLORS.PLAYER;
 
-    // Более детализированный персонаж
+    // Р‘РѕР»РµРµ РґРµС‚Р°Р»РёР·РёСЂРѕРІР°РЅРЅС‹Р№ РїРµСЂСЃРѕРЅР°Р¶
     // Body
     ctx.fillRect(px + 3, py + 4, SCALED_TILE - 6, SCALED_TILE - 5);
 
@@ -397,7 +397,7 @@ function drawPlayer() {
         ctx.fillRect(px + 3, py + SCALED_TILE - 2, 3, 2);
         ctx.fillRect(px + SCALED_TILE - 6 + legOffset, py + SCALED_TILE - 2, 3, 2);
     } else if (player.falling) {
-        // Falling pose - руки вверх
+        // Falling pose - СЂСѓРєРё РІРІРµСЂС…
         ctx.fillRect(px + 2, py + SCALED_TILE - 2, 3, 2);
         ctx.fillRect(px + SCALED_TILE - 5, py + SCALED_TILE - 2, 3, 2);
         ctx.fillRect(px + 1, py + 2, 2, 3);
@@ -423,7 +423,7 @@ function drawGuard(guard) {
     const px = guard.x * SCALED_TILE;
     const py = guard.y * SCALED_TILE;
 
-    // Детализированный скелет-охранник
+    // Р”РµС‚Р°Р»РёР·РёСЂРѕРІР°РЅРЅС‹Р№ СЃРєРµР»РµС‚-РѕС…СЂР°РЅРЅРёРє
     ctx.fillStyle = guard.hasGold ? COLORS.GOLD : COLORS.GUARD;
     
     // Skull head
@@ -484,7 +484,7 @@ function draw() {
 function canMove(x, y) {
     if (x < 0 || x >= LEVEL_WIDTH || y < 0 || y >= LEVEL_HEIGHT) return false;
     const tile = level[y][x];
-    // HIDDEN_LADDER всегда проходима, но отображается только после сбора золота
+    // HIDDEN_LADDER РІСЃРµРіРґР° РїСЂРѕС…РѕРґРёРјР°, РЅРѕ РѕС‚РѕР±СЂР°Р¶Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ РїРѕСЃР»Рµ СЃР±РѕСЂР° Р·РѕР»РѕС‚Р°
     return tile === EMPTY || tile === LADDER || tile === BAR || tile === GOLD ||
            tile === TRAP || tile === HIDDEN_LADDER;
 }
@@ -516,9 +516,9 @@ function isOnBar(x, y) {
 }
 
 function digHole(dir) {
-    // Копаем по диагонали вниз (вправо-вниз или влево-вниз)
+    // РљРѕРїР°РµРј РїРѕ РґРёР°РіРѕРЅР°Р»Рё РІРЅРёР· (РІРїСЂР°РІРѕ-РІРЅРёР· РёР»Рё РІР»РµРІРѕ-РІРЅРёР·)
     const digX = player.x + dir;
-    const digY = player.y + 1; // Копаем на уровень ниже
+    const digY = player.y + 1; // РљРѕРїР°РµРј РЅР° СѓСЂРѕРІРµРЅСЊ РЅРёР¶Рµ
 
     if (digX < 0 || digX >= LEVEL_WIDTH) return;
     if (digY >= LEVEL_HEIGHT) return;
@@ -545,7 +545,7 @@ function updateHoles(dt) {
                 }
             }
         } else {
-            if (hole.timer >= HOLE_CLOSE_TIME) { // 2.5 секунды до закрытия (в 2 раза быстрее)
+            if (hole.timer >= HOLE_CLOSE_TIME) { // 2.5 СЃРµРєСѓРЅРґС‹ РґРѕ Р·Р°РєСЂС‹С‚РёСЏ (РІ 2 СЂР°Р·Р° Р±С‹СЃС‚СЂРµРµ)
                 hole.stage--;
                 hole.timer = 0;
                 if (hole.stage <= 0) {
@@ -666,7 +666,7 @@ function updatePlayer(dt) {
         }
     }
 
-    // Check escape - только через скрытые лестницы после сбора всего золота
+    // Check escape - С‚РѕР»СЊРєРѕ С‡РµСЂРµР· СЃРєСЂС‹С‚С‹Рµ Р»РµСЃС‚РЅРёС†С‹ РїРѕСЃР»Рµ СЃР±РѕСЂР° РІСЃРµРіРѕ Р·РѕР»РѕС‚Р°
     const playerTile = level[player.y][player.x];
     if (playerTile === HIDDEN_LADDER && hiddenLaddersRevealed) {
         levelComplete = true;
@@ -820,7 +820,7 @@ function playerDie() {
 function nextLevel() {
     currentLevel++;
     if (currentLevel > LEVELS.length) {
-        // Победа! Прошли все уровни
+        // РџРѕР±РµРґР°! РџСЂРѕС€Р»Рё РІСЃРµ СѓСЂРѕРІРЅРё
         currentLevel = 1;
         lives = 3;
     } else {
